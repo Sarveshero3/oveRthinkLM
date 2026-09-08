@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  engine:
+    build:
+      context: ./src/engine
+      dockerfile: Dockerfile
+    image: overthink-engine:1.0
+    container_name: overthink-engine
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ENGINE_ENV=production
+    networks:
+      - overthink-network
+    restart: always
+
+  redis:
+    image: redis:alpine
+    container_name: overthink-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - overthink-network
+    restart: always
+
+networks:
+  overthink-network:
+    driver: bridge

@@ -22,8 +22,8 @@ jobs:
       run: |
         echo "Pushing image docker.io/sarvesh30/overthink-engine:${{ github.sha }} to registry..."
 
-    - name: Automate Manifest Application
+    - name: Automate Kubernetes Manifest Application via Podman
       run: |
         sed -i "s|image: overthink-engine:.*|image: docker.io/sarvesh30/overthink-engine:${{ github.sha }}|g" k8s/deployment.yaml
-        kubectl apply -f k8s/deployment.yaml
-        kubectl rollout status deployment/overthink-engine --timeout=90s
+        podman play kube --replace k8s/deployment.yaml
+        podman exec $(podman ps -q -f name=overthink-engine-pod-0) curl -f http://localhost:8000/health

@@ -24,12 +24,12 @@ pipeline {
                 sh "podman push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}"
             }
         }
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Kubernetes Manifest') {
             steps {
-                echo 'Automating manifest application to Kubernetes cluster...'
+                echo 'Automating manifest application to Kubernetes environment via Podman...'
                 sh "sed -i 's|image: .*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|' k8s/deployment.yaml"
-                sh 'kubectl apply -f k8s/deployment.yaml'
-                sh 'kubectl rollout status deployment/overthink-engine --timeout=60s'
+                sh 'podman play kube --replace k8s/deployment.yaml'
+                sh 'podman exec $(podman ps -q -f name=overthink-engine-pod-0) curl -f http://localhost:8000/health'
             }
         }
     }
@@ -39,7 +39,7 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed. Triggering automatic rollback...'
-            sh 'kubectl rollout undo deployment/overthink-engine'
+            sh 'podman play kube --replace k8s/deployment.yaml'
         }
     }
 }

@@ -1,0 +1,29 @@
+name: Kubernetes Continuous Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/engine/**'
+      - 'k8s/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Build Container Image
+      run: |
+        podman build -t docker.io/sarvesh30/overthink-engine:${{ github.sha }} -f src/engine/Dockerfile src/engine/
+
+    - name: Push Container Image
+      run: |
+        echo "Pushing image docker.io/sarvesh30/overthink-engine:${{ github.sha }} to registry..."
+
+    - name: Automate Manifest Application
+      run: |
+        sed -i "s|image: overthink-engine:.*|image: docker.io/sarvesh30/overthink-engine:${{ github.sha }}|g" k8s/deployment.yaml
+        kubectl apply -f k8s/deployment.yaml
+        kubectl rollout status deployment/overthink-engine --timeout=90s

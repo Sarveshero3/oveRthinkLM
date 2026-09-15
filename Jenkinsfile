@@ -29,7 +29,8 @@ pipeline {
                 echo 'Automating manifest application to Kubernetes environment via Podman...'
                 sh "sed -i 's|image: .*|image: ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}|' k8s/deployment.yaml"
                 sh 'podman play kube --replace k8s/deployment.yaml'
-                sh 'podman exec $(podman ps -q -f name=overthink-engine-pod-0) curl -f http://localhost:8000/health'
+                sh 'sleep 3'
+                sh 'CONTAINER_ID=$(podman ps --format "{{.ID}} {{.Image}}" | grep "overthink-engine" | awk \'{print $1}\' | head -n 1) && podman exec "$CONTAINER_ID" curl -f http://localhost:8000/health'
             }
         }
     }

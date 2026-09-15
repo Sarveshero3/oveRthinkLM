@@ -26,4 +26,19 @@ jobs:
       run: |
         sed -i "s|image: overthink-engine:.*|image: docker.io/sarvesh30/overthink-engine:${{ github.sha }}|g" k8s/deployment.yaml
         podman play kube --replace k8s/deployment.yaml
-        podman exec $(podman ps -q -f name=overthink-engine-pod-0) curl -f http://localhost:8000/health
+        sleep 3
+        podman pod ps
+        podman ps -a --pod
+        CONTAINER_ID=$(podman ps --format "{{.ID}} {{.Image}}" | grep "overthink-engine" | awk '{print $1}' | head -n 1)
+        echo "Identified running container: $CONTAINER_ID"
+        for i in {1..10}; do
+          RESPONSE=$(podman exec "$CONTAINER_ID" curl -s http://localhost:8000/health || true)
+          if echo "$RESPONSE" | grep -q "healthy"; then
+            echo "Service successfully verified healthy: $RESPONSE"
+            exit 0
+          fi
+          echo "Waiting for service to be healthy... ($i/10)"
+          sleep 2
+        done
+        echo "Error: Healthcheck timed out"
+        exit 1

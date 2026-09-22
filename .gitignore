@@ -33,3 +33,7 @@ desktop.ini
 # Large files
 skills_list.txt
 skills_matt.txt
+
+# Local college submissions & notes
+docs/college/
+docs/college_reasons/
